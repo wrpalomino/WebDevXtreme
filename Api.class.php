@@ -155,8 +155,13 @@ class SmsBroadcast extends Api
     return true;
   }
   
-  
-  public function requestCreditBalance()
+  /**
+   * TO BE IMPLEMENTED. Request the credit balance of the account
+   *
+   * @param  params   array with params to be used. It could be empty (previous defined params will be used)
+   * @return          boolean flag (Success or failure of the call)
+   */
+  public function requestCreditBalance($params=array())
   {
     
   }
