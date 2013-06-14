@@ -66,23 +66,6 @@ class MyUtil
 	$dir_size = $size = substr($size, 0, strpos ($size, ' '));
 	pclose ($io);
       }
-      
-      /*inefficient way 
-      if ($dh = opendir($dir_name)) {
-        while (($file = readdir($dh)) !== false) {
-          echo $file.'<br/>';
-          if ($file != "." && $file != "..") {
-            if (is_file($dir_name."/".$file)) {
-              $dir_size += filesize($dir_name."/".$file);
-            }
-            if (is_dir($dir_name."/".$file)) {  // check for any new directory inside this directory
-              $dir_size +=  $this->get_dir_size($dir_name."/".$file);
-            }
-          }
-        }
-      }
-      closedir($dh); */
-      
     }  
     
     return self::roundsize($dir_size);
@@ -122,9 +105,6 @@ class MyUtil
     elseif ($int == 2147483647) {       // 32bit
       return false;
     }
-    /*else {  // error 
-      return "error";
-    } */
     return false;  // it is 32bits by default
   }
   
