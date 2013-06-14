@@ -1,24 +1,34 @@
 <?php
 
 /**
-* Class CtCt: Define the interface between Constant Contact service (newsletter supcription) and the main web application
-* Created at 11/06/2012
-*
-* @author William Palomino
-* @version 1.0
-*/
-
+ * Class ConstantContact : Define the interface between Constant Contact service (newsletter supcription) and 
+ * the main web application
+ * Created at 11/06/2012
+ *
+ * @author William Palomino
+ * @version 1.0
+ */
 class ConstantContact 
 {
-   private $username = '';   // Constant Contact API key, obtain one at http://developer.constantcontact.com
-   private $apikey = '';     // Consumer secret is issued with an apikey
-   private $apisecret = '';
+   private $username = '';    // Constant Contact API key, obtain one at http://developer.constantcontact.com
+   private $apikey = '';      // Consumer secret is issued with an apikey
+   private $apisecret = '';   // alternative to password for OAuth 2.0
    private $redirectURL = ''; // Redirect URL (set when creating API key), this must match up; otherwise, it causes an error
  
-   private $code = '';
+   private $code = '';        // unique code generated in autorization request (to be used in the token call)
    private $list_id = 1;      // id of the subscription list to be used
    private $token = '';       // provided by constant contact after first request
    
+   /**
+    * Class Constructor
+    *
+    * @param  user     username
+    * @param  api      alternative to password and username to connect to the third party service
+    * @param  secret   alternative to password for OAuth 2.0
+    * @param  vurl     redirect URL
+    * @param  list     id of the subscription list to be used
+    * @return          NONE
+    */
    function __construct($user,$api,$secret,$vurl,$list = 1) 
    {
       $this->username = $user;
@@ -28,6 +38,11 @@ class ConstantContact
       $this->list_id = $list;
    }
    
+   /**
+    * Call for autorization token
+    *
+    * @return          NONE
+    */
    private function authorisationRequest() 
    {
       $url = 'https://oauth2.constantcontact.com/oauth2/oauth/siteowner/authorize?';
@@ -41,6 +56,12 @@ class ConstantContact
       //now wait for redirectURL to be called
    }
    
+   /**
+    * get the params from the reply to the autorization request
+    *
+    * @param  params   array with the values returned by the Service server
+    * @return          NONE
+    */
    public function redirectURLCallback($params) 
    {
       // code     the unique code generated for this request - to be used in the token call later in the flow.
@@ -48,11 +69,16 @@ class ConstantContact
       if ($params['username']==$this->username) {
          $this->code = $params['code'];
          $this->tokenRequest();
-         $this->addContacts();
+         $this->addContacts();  // evrything OK => add contacts
       }
       
    }
    
+   /**
+    * Request for autorization token before performing any action in the service server (constant contact)
+    *
+    * @return  token (string value) to be used to perform saving or other action in the service server
+    */
    private function tokenRequest() 
    {
       $url='https://oauth2.constantcontact.com/oauth2/oauth/token?';
@@ -89,6 +115,12 @@ class ConstantContact
       return $token;
    }
    
+   /**
+    * save locally the value of the token (email) for future authentications, instead of requesting new one
+    * 
+    * @param  email    token (email) string to be saved into the local database
+    * @return          NONE
+    */
    public function queueContact($email) 
    {
       $db = Doctrine_Manager::getInstance()->getCurrentConnection(); 
@@ -96,6 +128,12 @@ class ConstantContact
       $query->execute(array('email' => $email));
    }
    
+   /**
+    * add contacts to subscription list (our account) in the service server 
+    * 
+    * @param   email   email string to be saved into the local database
+    * @return          NONE
+    */
    public function addContacts() 
    {
       if ($this->token=='') {  //generate an auth callback, so this function will be called later when CTCT calls us back on redirectURL()
@@ -144,7 +182,11 @@ class ConstantContact
       }
    }
    
-   
+   /**
+    * get the token from local database if there is one; otherwise request new one
+    * 
+    * @return  token (string value) to be used to perform saving or other action in the service server
+    */
    private function getToken() 
    {
       $db = Doctrine_Manager::getInstance()->getCurrentConnection(); 
@@ -157,7 +199,14 @@ class ConstantContact
    }
    
    
-   private function makeRequest($url,$request = '',$post = 1) 
+   /**
+    * main function to perform the request (any type of request)
+    * 
+    * @param   url      url for the request
+    * @param   request  array with the params for the request
+    * @return           response (string value) with the status message of the request
+    */
+   private function makeRequest($url,$request) 
    {
       $ch = curl_init($url);
       curl_setopt($ch, CURLOPT_POST, 1);
@@ -192,6 +241,12 @@ require_once 'CTCT/Authentication.php';
 class MyConstantContactDataStore extends CTCTDataStore
 {
 
+  /**
+   * add a user to the local database
+   * 
+   * @param   user  array with the values for the user   
+   * @return        NONE
+   */
   function addUser($user)
   {
     $connection = Doctrine_Manager::connection();
@@ -199,6 +254,12 @@ class MyConstantContactDataStore extends CTCTDataStore
     $statement = $connection->execute($query);
   }
 
+  /**
+   * search for a user in the local database
+   * 
+   * @param   username  username of the user to search
+   * @return            array with the values for the user or false boolean flag in case no user is found
+   */
   function lookupUser($username)
   {      
     try {
