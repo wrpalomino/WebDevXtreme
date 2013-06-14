@@ -51,10 +51,9 @@ class MyUtil
       
       if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {   // windows
         $obj = new COM ('scripting.filesystemobject');
-  if (is_object($obj)) {
+  	if (is_object($obj)) {
           $ref = $obj->getfolder($dir_name);
           $dir_size = $ref->size;
-          //echo '<div>Directory: '.$dir_name.' => Size: '.$ref->size.'</div>';
           $obj = null;
 	}
 	else {  
@@ -62,12 +61,10 @@ class MyUtil
 	}
       } 
       else {    // linux/unix
-        //$dir_name = '.'.$dir_name';
 	$io = popen ('/usr/bin/du -sk '.$dir_name, 'r');
 	$size = fgets($io, 4096);
 	$dir_size = $size = substr($size, 0, strpos ($size, ' '));
 	pclose ($io);
-	//echo 'Directory: '.$dir_name.' => Size: '.$size;
       }
       
       /*inefficient way 
